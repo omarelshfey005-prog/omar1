@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- وسوم جعل الموقع يبدو كتطبيق هاتف حقيقي (PWA Capable) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#16a34a">
+    
+    <title>دفتري المالي الذكي</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Cairo) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        },
+                        danger: {
+                            50: '#fef2f2',
+                            100: '#fee2e2',
+                            500: '#ef4444',
+                            600: '#dc2626',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        /* تحسين مظهر شريط التمرير للواجهات الذكية */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 h-full flex flex-col transition-colors duration-300">
+
+    <!-- حاوية التطبيق المتجاوبة للهواتف الذكية -->
+    <div class="w-full max-w-md mx-auto bg-white dark:bg-slate-800 h-full shadow-2xl flex flex-col relative overflow-hidden">
+        
+        <!-- الهيدر العلوي للتطبيق -->
+        <header class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white px-4 py-4 sticky top-0 z-30 shadow-md">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2 space-x-reverse">
+                    <div class="bg-white/20 p-2 rounded-xl">
+                        <i class="fa-solid fa-wallet text-xl text-emerald-100"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-wide">دفتري المالي V.1</h1>
+                        <p class="text-xs text-emerald-100">برمجة وتطوير م/عمر الشافعي</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 space-x-reverse">
+                    <!-- زر تبديل المظهر -->
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-xl hover:bg-white/10 transition-colors focus:outline-none" title="تبديل الوضع الليلي">
+                        <i id="theme-icon" class="fa-solid fa-moon text-lg"></i>
+                    </button>
+                    <!-- زر إعدادات البيانات -->
+                    <button onclick="openBackupModal()" class="p-2 rounded-xl hover:bg-white/10 transition-colors focus:outline-none" title="البيانات والنسخ الاحتياطي">
+                        <i class="fa-solid fa-database text-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- المحتوى الرئيسي القابل للتمرير بلمسات اليد -->
+        <main class="flex-1 overflow-y-auto px-4 py-4 pb-24" id="main-content">
+            
+            <!-- قسم لوحة التحكم الرئيسية (الرئيسية) -->
+            <section id="section-dashboard" class="space-y-4">
+                <!-- بطاقة الرصيد الإجمالي التفاعلية -->
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 dark:from-slate-950 dark:to-slate-900 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+                    <p class="text-xs text-slate-400 font-medium mb-1">الصافي المالي العام</p>
+                    <div class="flex items-baseline space-x-2 space-x-reverse mb-4">
+                        <span id="net-balance" class="text-3xl font-extrabold tracking-tight">0.00</span>
+                        <span class="text-sm text-emerald-400 font-bold">جنيه</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 pt-4 border-t border-slate-700/50">
+                        <div class="bg-emerald-500/10 p-3 rounded-2xl border border-emerald-500/20">
+                            <div class="flex items-center space-x-1.5 space-x-reverse mb-1">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                <span class="text-[11px] text-slate-400">أطالب الآخرين (لي)</span>
+                            </div>
+                            <p id="total-lent" class="text-base font-bold text-emerald-400">0.00 <span class="text-[10px]">ج.م</span></p>
+                        </div>
+                        <div class="bg-rose-500/10 p-3 rounded-2xl border border-rose-500/20">
+                            <div class="flex items-center space-x-1.5 space-x-reverse mb-1">
+                                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                <span class="text-[11px] text-slate-400">مطلوب مني (علي)</span>
+                            </div>
+                            <p id="total-borrowed" class="text-base font-bold text-rose-400">0.00 <span class="text-[10px]">ج.م</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- أزرار الإجراء السريع الكبيرة -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="openAddContactModal()" class="flex flex-col items-center justify-center bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-4 rounded-2xl shadow-sm hover:shadow-md transition duration-200 active:scale-95 group">
+                        <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition duration-200">
+                            <i class="fa-solid fa-user-plus text-lg"></i>
+                        </div>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">شخص جديد</span>
+                    </button>
+                    <button onclick="openAddTransactionModal()" class="flex flex-col items-center justify-center bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-4 rounded-2xl shadow-sm hover:shadow-md transition duration-200 active:scale-95 group">
+                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition duration-200">
+                            <i class="fa-solid fa-file-invoice-dollar text-lg"></i>
+                        </div>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">تسجيل معاملة</span>
+                    </button>
+                </div>
+
+                <!-- قسم الإحصائيات السريعة ومؤشر الحالة -->
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <h3 class="text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider">مؤشر توزيع الحسابات</h3>
+                    <div class="relative pt-1">
+                        <div class="flex mb-2 items-center justify-between text-xs">
+                            <span class="font-semibold inline-block py-1 px-2 uppercase rounded-full text-emerald-600 bg-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400" id="progress-percent-label">
+                                الحساب متوازن
+                            </span>
+                            <div class="text-right">
+                                <span class="text-xs font-semibold inline-block text-slate-600 dark:text-slate-400" id="progress-ratio">
+                                    0 أشخاص مسجلين
+                                </span>
+                            </div>
+                        </div>
+                        <div class="overflow-hidden h-2.5 text-xs flex rounded bg-slate-100 dark:bg-slate-700">
+                            <div id="progress-bar-lent" style="width: 50%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-emerald-500 transition-all duration-500"></div>
+                            <div id="progress-bar-borrowed" style="width: 50%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-rose-500 transition-all duration-500"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قائمة المعاملات الأخيرة -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                            <i class="fa-solid fa-clock-rotate-left text-emerald-500 ml-2"></i>
+                            آخر العمليات المالية
+                        </h2>
+                    </div>
+                    <div id="recent-transactions" class="space-y-2">
+                        <!-- تظهر المعاملات ديناميكياً هنا -->
+                        <div class="text-center py-10 border-2 border-dashed border-slate-100 dark:border-slate-700/50 rounded-2xl text-slate-400 text-xs">
+                            <i class="fa-solid fa-receipt text-3xl text-slate-300 dark:text-slate-600 mb-2 block"></i>
+                            لا توجد معاملات مسجلة حالياً.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم الأشخاص والعملاء -->
+            <section id="section-contacts" class="space-y-4 hidden">
+                <!-- شريط البحث والفلترة -->
+                <div class="flex space-x-2 space-x-reverse">
+                    <div class="relative flex-1">
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                        </span>
+                        <input type="text" id="search-input" oninput="filterContacts()" placeholder="ابحث عن شخص بالاسم..." class="w-full pl-3 pr-9 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800 dark:text-slate-100">
+                    </div>
+                    <select id="filter-select" onchange="filterContacts()" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-2 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800 dark:text-slate-100">
+                        <option value="all">الكل</option>
+                        <option value="lent">أطالبهم (لي)</option>
+                        <option value="borrowed">يطالبونني (علي)</option>
+                        <option value="settled">مسوى (0.00)</option>
+                    </select>
+                </div>
+
+                <!-- قائمة الأشخاص -->
+                <div id="contacts-list" class="space-y-2">
+                    <!-- سيتم إضافة الأشخاص ديناميكياً -->
+                </div>
+            </section>
+
+            <!-- كشف حساب شخص محدد -->
+            <section id="section-ledger" class="space-y-4 hidden">
+                <!-- زر العودة ومعلومات العميل -->
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center">
+                        <button onclick="navigate('contacts')" class="text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center space-x-1 space-x-reverse">
+                            <i class="fa-solid fa-arrow-right"></i>
+                            <span>رجوع للأشخاص</span>
+                        </button>
+                        <div class="flex space-x-1.5 space-x-reverse">
+                            <button id="btn-call-contact" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 transition">
+                                <i class="fa-solid fa-phone text-xs"></i>
+                            </button>
+                            <button id="btn-share-whatsapp" class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center hover:bg-emerald-200 transition" title="مشاركة كشف الحساب">
+                                <i class="fa-brands fa-whatsapp text-sm"></i>
+                            </button>
+                            <button id="btn-delete-contact" class="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center hover:bg-rose-200 transition" title="حذف الشخص بالكامل">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold text-lg" id="ledger-avatar">
+                            --
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-slate-800 dark:text-slate-100" id="ledger-name">غير معروف</h2>
+                            <p class="text-xs text-slate-400" id="ledger-phone">لا يوجد هاتف</p>
+                        </div>
+                    </div>
+
+                    <!-- إجمالي الحساب الشخصي -->
+                    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block">حالة الحساب</span>
+                            <span id="ledger-status-text" class="text-xs font-bold text-emerald-500">حساب متوازن</span>
+                        </div>
+                        <div class="text-left">
+                            <span class="text-[10px] text-slate-400 block">المبلغ الحالي</span>
+                            <span id="ledger-balance" class="text-lg font-extrabold text-slate-800 dark:text-slate-100">0.00 ج.م</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قائمة المعاملات المفصلة للشخص -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center px-1">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">سجل الحركة المالية</h3>
+                        <button onclick="openAddTransactionForLedger()" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
+                            + معاملة جديدة
+                        </button>
+                    </div>
+                    <div id="ledger-transactions-list" class="space-y-2">
+                        <!-- تظهر المعاملات هنا -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- قسم التقارير المالية والتحليلات -->
+            <section id="section-reports" class="space-y-4 hidden">
+                <!-- ملخص سريع للتقارير -->
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-4">
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">تحليل وتوزيع الديون</h3>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-500">إجمالي ما أقرضته (الخارج)</span>
+                                <span id="report-lent-val" class="font-bold text-emerald-500">0.00 ج.م</span>
+                            </div>
+                            <div class="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                                <div id="report-lent-bar" class="bg-emerald-500 h-1.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-500">إجمالي ما استدنته (الداخل)</span>
+                                <span id="report-borrowed-val" class="font-bold text-rose-500">0.00 ج.م</span>
+                            </div>
+                            <div class="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                                <div id="report-borrowed-bar" class="bg-rose-500 h-1.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- إحصائيات سريعة للعددية -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 text-center">
+                        <i class="fa-solid fa-users text-blue-500 text-xl mb-1"></i>
+                        <p class="text-xs text-slate-400">إجمالي الأشخاص</p>
+                        <p id="stat-total-people" class="text-lg font-bold text-slate-800 dark:text-slate-100">0</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 text-center">
+                        <i class="fa-solid fa-handshake text-purple-500 text-xl mb-1"></i>
+                        <p class="text-xs text-slate-400">إجمالي العمليات</p>
+                        <p id="stat-total-txs" class="text-lg font-bold text-slate-800 dark:text-slate-100">0</p>
+                    </div>
+                </div>
+
+                <!-- بطاقة نصيحة ذكية -->
+                <div class="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 p-4 rounded-2xl flex items-start space-x-3 space-x-reverse">
+                    <div class="text-emerald-500 mt-1">
+                        <i class="fa-solid fa-lightbulb text-lg animate-pulse"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-emerald-800 dark:text-emerald-300">نصيحة الأمان المالي</h4>
+                        <p class="text-[11px] text-emerald-700 dark:text-emerald-400 mt-1 leading-relaxed">
+                            "احرص دائماً على أخذ نسخة احتياطية من بياناتك بشكل دوري من صفحة الإعدادات لتضمن عدم فقدانها في حال تغيير هاتفك المحمول."
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- التبويبات السفلية المثبتة (Bottom Navigation) -->
+        <nav class="absolute bottom-0 inset-x-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 py-2 px-4 flex justify-around items-center z-20 shadow-lg pb-safe">
+            <button onclick="navigate('dashboard')" id="nav-dashboard" class="flex flex-col items-center space-y-1 text-emerald-600 dark:text-emerald-400">
+                <i class="fa-solid fa-chart-pie text-lg"></i>
+                <span class="text-[10px] font-bold">الرئيسية</span>
+            </button>
+            <button onclick="navigate('contacts')" id="nav-contacts" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                <i class="fa-solid fa-address-book text-lg"></i>
+                <span class="text-[10px] font-bold">الأشخاص</span>
+            </button>
+            <button onclick="navigate('reports')" id="nav-reports" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                <i class="fa-solid fa-file-contract text-lg"></i>
+                <span class="text-[10px] font-bold">التقارير</span>
+            </button>
+        </nav>
+
+        <!-- =================== النوافذ المنبثقة (Modals) =================== -->
+
+        <!-- 1. نافذة إضافة شخص جديد -->
+        <div id="modal-add-contact" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50 hidden transition-opacity duration-300">
+            <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-t-3xl p-6 space-y-4 transform transition-transform duration-300 translate-y-full" id="modal-add-contact-container">
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-700">
+                    <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center">
+                        <i class="fa-solid fa-user-plus text-emerald-500 ml-2"></i>
+                        إضافة شخص جديد للحسابات
+                    </h3>
+                    <button onclick="closeAddContactModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <form onsubmit="handleAddContact(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5">الاسم الثنائي أو الثلاثي *</label>
+                        <input type="text" id="contact-name" required placeholder="مثال: أحمد محمد" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5">رقم الهاتف (اختياري)</label>
+                        <input type="tel" id="contact-phone" placeholder="مثال: 01012345678" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800 dark:text-white text-right">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5">ملاحظات إضافية (اختياري)</label>
+                        <textarea id="contact-notes" placeholder="تفاصيل إضافية عن الشخص..." class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800 dark:text-white h-20 resize-none"></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition-all">
+                        تأكيد وإضافة الحساب
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 2. نافذة تسجيل معاملة مالية جديدة -->
+        <div id="modal-add-transaction" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50 hidden transition-opacity duration-300">
+            <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-t-3xl p-6 space-y-4 transform transition-transform duration-300 translate-y-full" id="modal-add-tx-container">
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-700">
+                    <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center">
+                        <i class="fa-solid fa-money-bill-transfer text-emerald-500 ml-2"></i>
+                        تسجيل معاملة مالية جديدة
+                    </h3>
+                    <button onclick="closeAddTransactionModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <form onsubmit="handleAddTransaction(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5">اختر الشخص المعني *</label>
+                        <select id="tx-contact-id" required class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800 dark:text-white">
+                            <!-- خيارات الأشخاص تضاف هنا ديناميكياً -->
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5">نوع المعاملة المالية *</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="tx-type" value="give" checked class="peer sr-only">
+                                <div class="p-3 text-center rounded-xl border border-slate-200 dark:border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 peer-checked:text-emerald-600 dark:peer-checked:text-emerald-400 font-bold text-xs transition duration-200">
+                                    <i class="fa-solid fa-arrow-up-from-bracket ml-1.5"></i>
+                                    أعطيته (قرض / سلفته)
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="tx-type" value="take" class="peer sr-only">
+                                <div class="p-3 text-center rounded-xl border border-slate-200 dark:border-slate-600 peer-checked:border-rose-500 peer-checked:bg-rose-500/10 peer-checked:text-rose-600 dark:peer-checked:text-rose-400 font-bold text-xs transition duration-200">
+                                    <i class="fa-solid fa-arrow-down-to-bracket ml-1.5"></i>
+                                    أخذت منه (دَين / استلفت)
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">القيمة (جنيه مصري) *</label>
+                            <input type="number" step="0.01" id="tx-amount" required placeholder="0.00" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800 dark:text-white font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">التاريخ *</label>
+                            <input type="date" id="tx-date" required class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5">بيان المعاملة / ملاحظة (مثال: حق الغداء)</label>
+                        <input type="text" id="tx-note" placeholder="اكتب سبباً للمعاملة لسهولة تذكرها..." class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800 dark:text-white">
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition-all">
+                        تسجيل وحفظ المعاملة
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 3. نافذة إدارة النسخ الاحتياطي والبيانات -->
+        <div id="modal-backup" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+            <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-xl">
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-700">
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-white flex items-center">
+                        <i class="fa-solid fa-gears text-emerald-500 ml-2"></i>
+                        البيانات والنسخ الاحتياطي
+                    </h3>
+                    <button onclick="closeBackupModal()" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 flex items-center justify-center">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                </div>
+                
+                <p class="text-xs text-slate-500 leading-relaxed text-right">
+                    نظراً لأن بياناتك تُحفظ محلياً على جهازك لتوفير السرية القصوى، يُنصح بتحميل نسخة احتياطية من حين لآخر لحمايتها من الضياع.
+                </p>
+
+                <div class="space-y-2">
+                    <button onclick="exportData()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 space-x-reverse transition">
+                        <i class="fa-solid fa-file-export"></i>
+                        <span>حفظ نسخة احتياطية على الهاتف</span>
+                    </button>
+                    
+                    <label class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 space-x-reverse transition cursor-pointer">
+                        <i class="fa-solid fa-file-import"></i>
+                        <span>استعادة نسخة احتياطية سابقة</span>
+                        <input type="file" id="import-file" onchange="importData(event)" class="hidden" accept=".json">
+                    </label>
+
+                    <button onclick="clearAllData()" class="w-full py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-950/40 text-rose-600 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 space-x-reverse transition">
+                        <i class="fa-solid fa-trash-arrow-up"></i>
+                        <span>تصفير ومسح كافة البيانات!</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- حاوية الإشعارات المخصصة -->
+    <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col space-y-2 w-72 pointer-events-none"></div>
+
+    <!-- منطق العمليات المالي والبرمجي الفعال -->
+    <script>
+        // يبدأ التطبيق نظيفاً تماماً وخالياً من أي بيانات تجريبية
+        let state = {
+            contacts: [],
+            transactions: [],
+            activeContactId: null,
+            currentScreen: 'dashboard',
+            isDarkMode: false
+        };
+
+        // دالة البدء عند تحميل الصفحة
+        window.onload = function() {
+            const savedContacts = localStorage.getItem('daftari_contacts');
+            const savedTxs = localStorage.getItem('daftari_transactions');
+            const savedTheme = localStorage.getItem('daftari_darkmode');
+
+            if (savedContacts && savedTxs) {
+                state.contacts = JSON.parse(savedContacts);
+                state.transactions = JSON.parse(savedTxs);
+            } else {
+                state.contacts = [];
+                state.transactions = [];
+                saveToLocalStorage();
+            }
+
+            // تطبيق السمة والوضع البصري المفضل
+            if (savedTheme === 'true' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                state.isDarkMode = true;
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').className = "fa-solid fa-sun text-lg";
+            } else {
+                state.isDarkMode = false;
+                document.documentElement.classList.remove('dark');
+                document.getElementById('theme-icon').className = "fa-solid fa-moon text-lg";
+            }
+
+            // تعيين تاريخ اليوم تلقائياً
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('tx-date').value = today;
+
+            updateAllDataAndUI();
+        };
+
+        // حفظ البيانات محلياً بخصوصية تامة
+        function saveToLocalStorage() {
+            localStorage.setItem('daftari_contacts', JSON.stringify(state.contacts));
+            localStorage.setItem('daftari_transactions', JSON.stringify(state.transactions));
+        }
+
+        // تحديث البيانات وحالة الرسوم البيانية والواجهة
+        function updateAllDataAndUI() {
+            calculateBalances();
+            renderRecentTransactions();
+            renderContacts();
+            renderReports();
+            if (state.activeContactId) {
+                renderLedger(state.activeContactId);
+            }
+        }
+
+        // حساب الديون والمستحقات والنسب المئوية
+        function calculateBalances() {
+            let totalLent = 0;       
+            let totalBorrowed = 0;   
+
+            state.contacts.forEach(contact => {
+                contact.balance = 0; 
+                
+                const txs = state.transactions.filter(t => t.accountId === contact.id);
+                txs.forEach(t => {
+                    const amt = parseFloat(t.amount);
+                    if (t.type === 'give') {
+                        contact.balance += amt;
+                    } else {
+                        contact.balance -= amt;
+                    }
+                });
+
+                if (contact.balance > 0) {
+                    totalLent += contact.balance;
+                } else if (contact.balance < 0) {
+                    totalBorrowed += Math.abs(contact.balance);
+                }
+            });
+
+            const netBalance = totalLent - totalBorrowed;
+            const netEl = document.getElementById('net-balance');
+            netEl.textContent = formatCurrency(netBalance);
+            
+            if (netBalance > 0) {
+                netEl.className = "text-3xl font-extrabold tracking-tight text-emerald-400";
+            } else if (netBalance < 0) {
+                netEl.className = "text-3xl font-extrabold tracking-tight text-rose-500";
+            } else {
+                netEl.className = "text-3xl font-extrabold tracking-tight text-white";
+            }
+
+            document.getElementById('total-lent').innerHTML = `${formatCurrency(totalLent)} <span class="text-[10px]">ج.م</span>`;
+            document.getElementById('total-borrowed').innerHTML = `${formatCurrency(totalBorrowed)} <span class="text-[10px]">ج.م</span>`;
+
+            // تحديث مؤشر الحسابات التفاعلي
+            const totalActivity = totalLent + totalBorrowed;
+            const barLent = document.getElementById('progress-bar-lent');
+            const barBorrowed = document.getElementById('progress-bar-borrowed');
+            const ratioEl = document.getElementById('progress-ratio');
+            const percentLabel = document.getElementById('progress-percent-label');
+
+            if (totalActivity > 0) {
+                const lentPct = (totalLent / totalActivity) * 100;
+                barLent.style.width = `${lentPct}%`;
+                barBorrowed.style.width = `${100 - lentPct}%`;
+                percentLabel.textContent = `%${Math.round(lentPct)} لي ماليّاً`;
+            } else {
+                barLent.style.width = `50%`;
+                barBorrowed.style.width = `50%`;
+                percentLabel.textContent = `الحساب متوازن`;
+            }
+
+            const lentContactsCount = state.contacts.filter(c => c.balance > 0).length;
+            ratioEl.textContent = `${lentContactsCount} من أصل ${state.contacts.length} لديهم مستحقات`;
+        }
+
+        // عرض قائمة المعاملات الأخيرة بالرئيسية
+        function renderRecentTransactions() {
+            const container = document.getElementById('recent-transactions');
+            container.innerHTML = '';
+
+            const sortedTxs = [...state.transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+
+            if (sortedTxs.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 border-2 border-dashed border-slate-100 dark:border-slate-700/50 rounded-2xl text-slate-400 text-xs">
+                        <i class="fa-solid fa-receipt text-3xl text-slate-300 dark:text-slate-600 mb-2 block"></i>
+                        لا توجد معاملات مسجلة حالياً.
+                    </div>`;
+                return;
+            }
+
+            sortedTxs.forEach(tx => {
+                const contact = state.contacts.find(c => c.id === tx.accountId) || { name: 'شخص محذوف' };
+                const isGive = tx.type === 'give';
+                
+                const card = document.createElement('div');
+                card.className = "flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-700/30 border border-slate-100 dark:border-slate-700/50 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-700/50 transition cursor-pointer";
+                card.onclick = () => { openContactLedger(tx.accountId); };
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                        <div class="w-10 h-10 rounded-xl ${isGive ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400' : 'bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400'} flex items-center justify-center text-sm font-bold">
+                            <i class="${isGive ? 'fa-solid fa-arrow-up-from-bracket' : 'fa-solid fa-arrow-down-to-bracket'}"></i>
+                        </div>
+                        <div class="text-right">
+                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100">${contact.name}</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5">${formatDate(tx.date)} ${tx.note ? `• ${tx.note}` : ''}</p>
+                        </div>
+                    </div>
+                    <div class="text-left">
+                        <span class="text-xs font-extrabold ${isGive ? 'text-emerald-500' : 'text-rose-500'}">
+                            ${isGive ? '+' : '-'}${formatCurrency(tx.amount)}
+                        </span>
+                        <span class="text-[8px] text-slate-400 block">ج.م</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // عرض وإدارة شاشة الأشخاص
+        function renderContacts() {
+            const container = document.getElementById('contacts-list');
+            container.innerHTML = '';
+
+            if (state.contacts.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-slate-400 text-xs">
+                        <i class="fa-solid fa-user-slash text-4xl text-slate-300 dark:text-slate-600 mb-3 block"></i>
+                        لم تقم بإضافة أي أشخاص لحساباتك بعد.
+                        <button onclick="openAddContactModal()" class="mt-4 px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl block mx-auto hover:bg-emerald-700 transition">
+                            أضف شخصاً الآن
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            state.contacts.forEach(contact => {
+                const bal = contact.balance;
+                let balText = "";
+                let balClass = "";
+                
+                if (bal > 0) {
+                    balText = `أطالبه بـ: ${formatCurrency(bal)} ج.م`;
+                    balClass = "text-emerald-500 font-extrabold";
+                } else if (bal < 0) {
+                    balText = `يطالبني بـ: ${formatCurrency(Math.abs(bal))} ج.م`;
+                    balClass = "text-rose-500 font-extrabold";
+                } else {
+                    balText = "الحساب مسوّى (0.00)";
+                    balClass = "text-slate-400 font-medium";
+                }
+
+                const initialLetters = contact.name.trim().split(" ").map(n => n[0]).slice(0, 2).join("");
+
+                const card = document.createElement('div');
+                card.className = "flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-2xl hover:border-emerald-300 dark:hover:border-emerald-800 transition cursor-pointer shadow-sm relative overflow-hidden group";
+                card.onclick = () => { openContactLedger(contact.id); };
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                        <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 group-hover:bg-emerald-500 group-hover:text-white transition text-slate-600 dark:text-slate-300 flex items-center justify-center font-extrabold text-xs">
+                            ${initialLetters}
+                        </div>
+                        <div class="text-right">
+                            <h3 class="text-xs font-bold text-slate-800 dark:text-slate-100">${contact.name}</h3>
+                            <p class="text-[10px] text-slate-400 mt-0.5">${contact.phone || 'بدون هاتف'}</p>
+                        </div>
+                    </div>
+                    <div class="text-left">
+                        <span class="text-xs ${balClass} block">${balText}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            updateTransactionContactsDropdown();
+        }
+
+        // تحديث القائمة المنسدلة في نافذة تسجيل معاملة
+        function updateTransactionContactsDropdown() {
+            const select = document.getElementById('tx-contact-id');
+            select.innerHTML = '<option value="" disabled selected>اختر الشخص المعني</option>';
+            
+            const sorted = [...state.contacts].sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+            sorted.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                select.appendChild(opt);
+            });
+        }
+
+        // تصفية والبحث في قائمة جهات الاتصال والمدينين
+        function filterContacts() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filter = document.getElementById('filter-select').value;
+            const container = document.getElementById('contacts-list');
+            
+            const filtered = state.contacts.filter(contact => {
+                const matchesSearch = contact.name.toLowerCase().includes(query) || (contact.phone && contact.phone.includes(query));
+                
+                if (filter === 'all') return matchesSearch;
+                if (filter === 'lent') return matchesSearch && contact.balance > 0;
+                if (filter === 'borrowed') return matchesSearch && contact.balance < 0;
+                if (filter === 'settled') return matchesSearch && contact.balance === 0;
+                return matchesSearch;
+            });
+
+            container.innerHTML = '';
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-xs">لم يتم العثور على أي نتائج مطابقة.</div>`;
+                return;
+            }
+
+            filtered.forEach(contact => {
+                const bal = contact.balance;
+                let balText = bal > 0 ? `أطالبه بـ: ${formatCurrency(bal)} ج.م` : bal < 0 ? `يطالبني بـ: ${formatCurrency(Math.abs(bal))} ج.م` : "الحساب مسوّى (0.00)";
+                let balClass = bal > 0 ? "text-emerald-500 font-extrabold" : bal < 0 ? "text-rose-500 font-extrabold" : "text-slate-400 font-medium";
+                const initialLetters = contact.name.trim().split(" ").map(n => n[0]).slice(0, 2).join("");
+
+                const card = document.createElement('div');
+                card.className = "flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-2xl hover:border-emerald-300 dark:hover:border-emerald-800 transition cursor-pointer shadow-sm";
+                card.onclick = () => { openContactLedger(contact.id); };
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                        <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center font-extrabold text-xs">
+                            ${initialLetters}
+                        </div>
+                        <div class="text-right">
+                            <h3 class="text-xs font-bold text-slate-800 dark:text-slate-100">${contact.name}</h3>
+                            <p class="text-[10px] text-slate-400 mt-0.5">${contact.phone || 'بدون هاتف'}</p>
+                        </div>
+                    </div>
+                    <div class="text-left">
+                        <span class="text-xs ${balClass} block">${balText}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // فتح كشف حساب مالي تفصيلي لشخص
+        function openContactLedger(contactId) {
+            state.activeContactId = contactId;
+            navigate('ledger');
+        }
+
+        // توليد وبناء كشف الحساب التراكمي
+        function renderLedger(contactId) {
+            const contact = state.contacts.find(c => c.id === contactId);
+            if (!contact) {
+                navigate('contacts');
+                return;
+            }
+
+            document.getElementById('ledger-name').textContent = contact.name;
+            document.getElementById('ledger-phone').textContent = contact.phone || "لا يوجد هاتف مسجل";
+            document.getElementById('ledger-avatar').textContent = contact.name.trim().split(" ").map(n => n[0]).slice(0, 2).join("");
+
+            const btnCall = document.getElementById('btn-call-contact');
+            if (contact.phone) {
+                btnCall.onclick = () => { window.location.href = `tel:${contact.phone}`; };
+                btnCall.style.display = 'flex';
+            } else {
+                btnCall.style.display = 'none';
+            }
+
+            document.getElementById('btn-delete-contact').onclick = () => {
+                confirmDeleteContact(contact.id, contact.name);
+            };
+
+            const bal = contact.balance;
+            const balEl = document.getElementById('ledger-balance');
+            const statusEl = document.getElementById('ledger-status-text');
+
+            balEl.textContent = `${formatCurrency(Math.abs(bal))} ج.م`;
+            if (bal > 0) {
+                statusEl.textContent = "أطالبه بهذا المبلغ (لي)";
+                statusEl.className = "text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full inline-block";
+                balEl.className = "text-lg font-extrabold text-emerald-500";
+            } else if (bal < 0) {
+                statusEl.textContent = "يطالبني بهذا المبلغ (علي)";
+                statusEl.className = "text-xs font-bold text-rose-500 bg-rose-500/10 px-2.5 py-1 rounded-full inline-block";
+                balEl.className = "text-lg font-extrabold text-rose-500";
+            } else {
+                statusEl.textContent = "الحساب خالص ومسوى تماماً";
+                statusEl.className = "text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-full inline-block";
+                balEl.className = "text-lg font-extrabold text-slate-400";
+            }
+
+            document.getElementById('btn-share-whatsapp').onclick = () => {
+                shareStatementViaWhatsapp(contact);
+            };
+
+            const txs = state.transactions.filter(t => t.accountId === contactId).sort((a, b) => new Date(a.date) - new Date(b.date));
+            const txContainer = document.getElementById('ledger-transactions-list');
+            txContainer.innerHTML = '';
+
+            if (txs.length === 0) {
+                txContainer.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">لا توجد معاملات مسجلة لهذا الحساب بعد.</div>`;
+                return;
+            }
+
+            let runningBalance = 0; 
+
+            txs.forEach(tx => {
+                const amt = parseFloat(tx.amount);
+                const isGive = tx.type === 'give';
+                if (isGive) {
+                    runningBalance += amt;
+                } else {
+                    runningBalance -= amt;
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/50 p-3 rounded-2xl flex justify-between items-center relative group";
+                
+                card.innerHTML = `
+                    <div class="flex items-center space-x-2.5 space-x-reverse">
+                        <div class="w-8 h-8 rounded-lg ${isGive ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'} flex items-center justify-center text-xs font-bold">
+                            ${isGive ? 'أعطيته' : 'أخذت'}
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-100 block">${tx.note || (isGive ? 'دفعة نقدية صادرة' : 'دفعة نقدية واردة')}</span>
+                            <span class="text-[9px] text-slate-400">${formatDate(tx.date)}</span>
+                        </div>
+                    </div>
+                    <div class="text-left flex items-center space-x-3 space-x-reverse">
+                        <div class="text-left">
+                            <span class="text-xs font-extrabold ${isGive ? 'text-emerald-500' : 'text-rose-500'} block">
+                                ${isGive ? '+' : '-'}${formatCurrency(tx.amount)}
+                            </span>
+                            <span class="text-[9px] text-slate-400 block">الرصيد: ${formatCurrency(runningBalance)}</span>
+                        </div>
+                        <button onclick="handleDeleteTransaction('${tx.id}')" class="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100" title="حذف العملية">
+                            <i class="fa-solid fa-trash-can text-[10px]"></i>
+                        </button>
+                    </div>
+                `;
+                txContainer.appendChild(card);
+            });
+        }
+
+        // عرض تقارير ورسوم بيانية لصافي التدفقات
+        function renderReports() {
+            let totalLent = 0;
+            let totalBorrowed = 0;
+
+            state.contacts.forEach(contact => {
+                let bal = 0;
+                const txs = state.transactions.filter(t => t.accountId === contact.id);
+                txs.forEach(t => {
+                    if (t.type === 'give') bal += parseFloat(t.amount);
+                    else bal -= parseFloat(t.amount);
+                });
+
+                if (bal > 0) totalLent += bal;
+                else if (bal < 0) totalBorrowed += Math.abs(bal);
+            });
+
+            const totalActivity = totalLent + totalBorrowed;
+            const lentBar = document.getElementById('report-lent-bar');
+            const borrowedBar = document.getElementById('report-borrowed-bar');
+
+            document.getElementById('report-lent-val').textContent = `${formatCurrency(totalLent)} ج.م`;
+            document.getElementById('report-borrowed-val').textContent = `${formatCurrency(totalBorrowed)} ج.م`;
+
+            if (totalActivity > 0) {
+                lentBar.style.width = `${(totalLent / totalActivity) * 100}%`;
+                borrowedBar.style.width = `${(totalBorrowed / totalActivity) * 100}%`;
+            } else {
+                lentBar.style.width = `0%`;
+                borrowedBar.style.width = `0%`;
+            }
+
+            document.getElementById('stat-total-people').textContent = state.contacts.length;
+            document.getElementById('stat-total-txs').textContent = state.transactions.length;
+        }
+
+        // إضافة حساب جديد
+        function handleAddContact(e) {
+            e.preventDefault();
+            const name = document.getElementById('contact-name').value.trim();
+            const phone = document.getElementById('contact-phone').value.trim();
+            const notes = document.getElementById('contact-notes').value.trim();
+
+            if (!name) return;
+
+            const exists = state.contacts.some(c => c.name === name);
+            if (exists) {
+                showToast("عذراً، هذا الاسم مسجل مسبقاً!", "error");
+                return;
+            }
+
+            const newContact = {
+                id: Date.now().toString(),
+                name,
+                phone,
+                notes
+            };
+
+            state.contacts.push(newContact);
+            saveToLocalStorage();
+            updateAllDataAndUI();
+            
+            e.target.reset();
+            closeAddContactModal();
+            showToast(`تمت إضافة ${name} بنجاح`, "success");
+        }
+
+        // تسجيل وحفظ المعاملة
+        function handleAddTransaction(e) {
+            e.preventDefault();
+            const accountId = document.getElementById('tx-contact-id').value;
+            const type = document.querySelector('input[name="tx-type"]:checked').value;
+            const amount = parseFloat(document.getElementById('tx-amount').value);
+            const date = document.getElementById('tx-date').value;
+            const note = document.getElementById('tx-note').value.trim();
+
+            if (!accountId || isNaN(amount) || amount <= 0 || !date) {
+                showToast("يرجى ملء جميع الحقول الإلزامية بشكل صحيح!", "error");
+                return;
+            }
+
+            const newTx = {
+                id: Date.now().toString(),
+                accountId,
+                type,
+                amount,
+                date,
+                note
+            };
+
+            state.transactions.push(newTx);
+            saveToLocalStorage();
+            updateAllDataAndUI();
+
+            e.target.reset();
+            document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+            closeAddTransactionModal();
+            showToast("تم تسجيل المعاملة وحفظ الرصيد بنجاح!", "success");
+        }
+
+        function openAddTransactionForLedger() {
+            openAddTransactionModal();
+            document.getElementById('tx-contact-id').value = state.activeContactId;
+        }
+
+        function handleDeleteTransaction(txId) {
+            if (confirm("هل أنت متأكد من رغبتك في حذف هذه المعاملة؟ سيتم إعادة حساب الأرصدة تلقائياً.")) {
+                state.transactions = state.transactions.filter(t => t.id !== txId);
+                saveToLocalStorage();
+                updateAllDataAndUI();
+                showToast("تم حذف المعاملة بنجاح", "success");
+            }
+        }
+
+        function confirmDeleteContact(id, name) {
+            if (confirm(`تحذير هام جداً: هل أنت متأكد من حذف حساب (${name}) بالكامل مع جميع معاملاته المالية المسجلة؟`)) {
+                state.contacts = state.contacts.filter(c => c.id !== id);
+                state.transactions = state.transactions.filter(t => t.accountId !== id);
+                state.activeContactId = null;
+                saveToLocalStorage();
+                updateAllDataAndUI();
+                navigate('contacts');
+                showToast(`تم حذف حساب ${name} بنجاح`, "success");
+            }
+        }
+
+        // مشاركة كشف حساب منسق وجذاب عبر تطبيق WhatsApp للطرف الآخر مباشرة
+        function shareStatementViaWhatsapp(contact) {
+            const txs = state.transactions.filter(t => t.accountId === contact.id).sort((a, b) => new Date(a.date) - new Date(b.date));
+            if (txs.length === 0) {
+                showToast("لا توجد معاملات مضافة لمشاركتها حالياً!", "error");
+                return;
+            }
+
+            let msg = `*كشف حساب مالي - دفتري*\n`;
+            msg += `*الاسم:* ${contact.name}\n`;
+            msg += `*التاريخ:* ${new Date().toLocaleDateString('ar-EG')}\n`;
+            msg += `----------------------------------------\n`;
+
+            txs.forEach((tx, idx) => {
+                const typeText = tx.type === 'give' ? 'أعطيتك (+)' : 'أخذت منك (-)';
+                msg += `${idx + 1}. [${tx.date}] ${typeText}: ${tx.amount} ج.م ${tx.note ? `(${tx.note})` : ''}\n`;
+            });
+
+            msg += `----------------------------------------\n`;
+            const bal = contact.balance;
+            if (bal > 0) {
+                msg += `*الموقف الحالي:* متبقي عليك مبلغ *${formatCurrency(bal)} ج.م* لصالحي.`;
+            } else if (bal < 0) {
+                msg += `*الموقف الحالي:* متبقي لك عندي مبلغ *${formatCurrency(Math.abs(bal))} ج.م*.`;
+            } else {
+                msg += `*الموقف الحالي:* الحساب مسوّى بالكامل (خالص)`;
+            }
+
+            const encodedText = encodeURIComponent(msg);
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
+            
+            window.open(whatsappUrl, '_blank');
+            showToast("تم تجهيز كشف الحساب وفتح تطبيق الواتساب!", "success");
+        }
+
+        // نظام التنقل وحركة الشاشات الفورية
+        function navigate(screen) {
+            state.currentScreen = screen;
+            
+            document.getElementById('section-dashboard').classList.add('hidden');
+            document.getElementById('section-contacts').classList.add('hidden');
+            document.getElementById('section-ledger').classList.add('hidden');
+            document.getElementById('section-reports').classList.add('hidden');
+
+            if (screen === 'dashboard') {
+                document.getElementById('section-dashboard').classList.remove('hidden');
+            } else if (screen === 'contacts') {
+                document.getElementById('section-contacts').classList.remove('hidden');
+            } else if (screen === 'ledger') {
+                document.getElementById('section-ledger').classList.remove('hidden');
+            } else if (screen === 'reports') {
+                document.getElementById('section-reports').classList.remove('hidden');
+            }
+
+            const navDashboard = document.getElementById('nav-dashboard');
+            const navContacts = document.getElementById('nav-contacts');
+            const navReports = document.getElementById('nav-reports');
+
+            [navDashboard, navContacts, navReports].forEach(el => {
+                el.className = "flex flex-col items-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition";
+            });
+
+            if (screen === 'dashboard') {
+                navDashboard.className = "flex flex-col items-center space-y-1 text-emerald-600 dark:text-emerald-400 font-bold transition";
+            } else if (screen === 'contacts' || screen === 'ledger') {
+                navContacts.className = "flex flex-col items-center space-y-1 text-emerald-600 dark:text-emerald-400 font-bold transition";
+            } else if (screen === 'reports') {
+                navReports.className = "flex flex-col items-center space-y-1 text-emerald-600 dark:text-emerald-400 font-bold transition";
+            }
+        }
+
+        // فتح وإغلاق النوافذ المنبثقة بحركة سلاسة
+        function openAddContactModal() {
+            const modal = document.getElementById('modal-add-contact');
+            const container = document.getElementById('modal-add-contact-container');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                container.classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeAddContactModal() {
+            const modal = document.getElementById('modal-add-contact');
+            const container = document.getElementById('modal-add-contact-container');
+            container.classList.add('translate-y-full');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function openAddTransactionModal() {
+            const modal = document.getElementById('modal-add-transaction');
+            const container = document.getElementById('modal-add-tx-container');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                container.classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeAddTransactionModal() {
+            const modal = document.getElementById('modal-add-transaction');
+            const container = document.getElementById('modal-add-tx-container');
+            container.classList.add('translate-y-full');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function openBackupModal() {
+            document.getElementById('modal-backup').classList.remove('hidden');
+        }
+
+        function closeBackupModal() {
+            document.getElementById('modal-backup').classList.add('hidden');
+        }
+
+        // التحكم في المظهر الداكن والخفيف
+        function toggleDarkMode() {
+            state.isDarkMode = !state.isDarkMode;
+            if (state.isDarkMode) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').className = "fa-solid fa-sun text-lg";
+                showToast("تم تفعيل الوضع الليلي", "info");
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('theme-icon').className = "fa-solid fa-moon text-lg";
+                showToast("تم تفعيل الوضع النهاري", "info");
+            }
+            localStorage.setItem('daftari_darkmode', state.isDarkMode);
+        }
+
+        // تصدير نسخة احتياطية من البيانات بصيغة JSON قابلة للتحميل
+        function exportData() {
+            if (state.contacts.length === 0) {
+                showToast("لا توجد بيانات لتصديرها حالياً!", "error");
+                return;
+            }
+            const dataStr = JSON.stringify({ contacts: state.contacts, transactions: state.transactions }, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `Daftari_Backup_${new Date().toISOString().slice(0,10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            showToast("تم حفظ ملف النسخة الاحتياطية بنجاح!", "success");
+        }
+
+        // استيراد واستعادة بيانات قديمة من ملف JSON
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.contacts && imported.transactions) {
+                        state.contacts = imported.contacts;
+                        state.transactions = imported.transactions;
+                        saveToLocalStorage();
+                        updateAllDataAndUI();
+                        closeBackupModal();
+                        showToast("تم استيراد حساباتك السابقة بنجاح!", "success");
+                    } else {
+                        showToast("ملف غير صالح!", "error");
+                    }
+                } catch (err) {
+                    showToast("حدث خطأ أثناء قراءة الملف!", "error");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // تصفير وتهيئة كافة البيانات ومسح الحسابات
+        function clearAllData() {
+            if (confirm("هل أنت متأكد تماماً من مسح وتصفير كافة الحسابات بشكل نهائي؟ لا يمكن التراجع عن هذا الإجراء.")) {
+                state.contacts = [];
+                state.transactions = [];
+                state.activeContactId = null;
+                saveToLocalStorage();
+                updateAllDataAndUI();
+                closeBackupModal();
+                navigate('dashboard');
+                showToast("تم تصفير الدفتر المالي بنجاح.", "success");
+            }
+        }
+
+        // دوال مساعدة للتنسيق الرقمي والتواريخ باللغة العربية
+        function formatCurrency(val) {
+            return parseFloat(val).toLocaleString('ar-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function formatDate(dateStr) {
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' });
+            } catch(e) {
+                return dateStr;
+            }
+        }
+
+        // إشعارات التطبيق
+        function showToast(message, type = "info") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = "bg-slate-800 text-white";
+            let iconClass = "fa-solid fa-circle-info text-blue-400";
+            
+            if (type === "success") {
+                bgClass = "bg-emerald-600 text-white shadow-emerald-500/10";
+                iconClass = "fa-solid fa-circle-check text-emerald-100";
+            } else if (type === "error") {
+                bgClass = "bg-rose-600 text-white shadow-rose-500/10";
+                iconClass = "fa-solid fa-circle-exclamation text-rose-100";
+            }
+
+            toast.className = `${bgClass} p-3.5 rounded-2xl flex items-center space-x-2 space-x-reverse text-xs font-bold shadow-lg transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto`;
+            toast.innerHTML = `
+                <i class="${iconClass} text-sm ml-1.5"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 50);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
